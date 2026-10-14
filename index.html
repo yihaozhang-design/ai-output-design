@@ -1,0 +1,953 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Output – Property Inspections</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Roboto:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Roboto', sans-serif;
+      background: #e5e5e5;
+      display: flex;
+      justify-content: center;
+      padding: 32px 0 64px;
+    }
+
+    /* ── Viewport shell ── */
+    .phone {
+      width: 370px;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+
+    /* ── Shared utilities ── */
+    .flex { display: flex; }
+    .flex-col { flex-direction: column; }
+    .items-center { align-items: center; }
+    .items-start { align-items: flex-start; }
+    .justify-between { justify-content: space-between; }
+    .justify-center { justify-content: center; }
+    .gap-4 { gap: 4px; }
+    .gap-8 { gap: 8px; }
+    .gap-12 { gap: 12px; }
+    .gap-16 { gap: 16px; }
+    .gap-20 { gap: 20px; }
+    .gap-24 { gap: 24px; }
+    .w-full { width: 100%; }
+    .relative { position: relative; }
+    .shrink-0 { flex-shrink: 0; }
+
+    /* ── AI Avatar ── */
+    .ai-avatar {
+      position: relative;
+      width: 40px;
+      height: 40px;
+      flex-shrink: 0;
+    }
+    .ai-avatar .bubble {
+      position: absolute;
+      inset: 0;
+      background: #fefefe;
+      border-radius: 22.222px;
+      box-shadow: 0px 1.778px 1.778px rgba(0,0,0,0.25);
+    }
+    .ai-avatar img {
+      position: absolute;
+      left: 5px;
+      top: 7px;
+      width: 31.283px;
+      height: 28.319px;
+    }
+
+    /* ── Conversation row ── */
+    .convo-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      width: 370px;
+    }
+
+    /* ── User prompt bubble ── */
+    .user-prompt {
+      display: flex;
+      justify-content: flex-end;
+      width: 370px;
+      padding-left: 47px;
+    }
+    .user-prompt .bubble-inner {
+      background: #2883da;
+      border: 1px solid #f3f3f3;
+      border-radius: 4px 24px 4px 4px;
+      padding: 16px 24px;
+      color: #fff;
+      font-family: 'SF Pro Display', 'Roboto', sans-serif;
+      font-size: 16px;
+      line-height: 22px;
+      font-weight: 400;
+      max-width: 321px;
+    }
+
+    /* ── AI text bubble ── */
+    .ai-text-bubble {
+      background: #f2f1f1;
+      border: 1px solid #f3f3f3;
+      border-radius: 0 20px 20px 20px;
+      padding: 18px 17px;
+      width: 322px;
+      font-family: 'SF Pro Display', 'Roboto', sans-serif;
+      font-size: 16px;
+      line-height: 22px;
+      color: #2a2a37;
+      font-weight: 400;
+    }
+
+    /* ── Section spacing ── */
+    .section { margin-bottom: 16px; }
+
+    /* ── Appointment overview card ── */
+    .appt-overview {
+      background: #fff;
+      border: 1px solid #dddcdb;
+      border-radius: 8px;
+      padding: 21px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      width: 370px;
+    }
+    .appt-overview .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 14px;
+      letter-spacing: -0.1504px;
+      white-space: nowrap;
+    }
+    .appt-overview .header .title { font-weight: 500; color: #000; }
+    .appt-overview .header .next { font-weight: 600; color: #2783da; }
+
+    /* Timeline bars */
+    .timeline {
+      display: flex;
+      gap: 3.99px;
+      height: 27.986px;
+      align-items: center;
+    }
+    .timeline-slot {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 3.99px;
+      position: relative;
+    }
+    .timeline-slot .bar {
+      height: 7.992px;
+      border-radius: 4px;
+    }
+    .bar-green { background: #66b584; }
+    .bar-blue  { background: #2783da; }
+    .bar-gray  { background: #e5e7eb; }
+    .timeline-slot .time-label {
+      font-family: 'Inter', sans-serif;
+      font-size: 12px;
+      color: #525252;
+      text-align: center;
+      line-height: 16px;
+      white-space: nowrap;
+    }
+
+    /* ── Next appt card ── */
+    .next-appt-card {
+      background: #fff;
+      border: 1px solid #dddcdb;
+      border-radius: 8px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      align-items: center;
+      width: 370px;
+    }
+    .next-appt-card .top-row {
+      display: flex;
+      gap: 16px;
+      align-items: flex-start;
+      width: 100%;
+    }
+    .next-appt-card .info { display: flex; flex-direction: column; gap: 16px; flex: 1; }
+    .next-appt-card .label-row { display: flex; flex-direction: column; gap: 8px; font-size: 14px; white-space: nowrap; }
+    .next-appt-card .label-row .appt-label { font-weight: 600; color: #2783da; letter-spacing: -0.1504px; line-height: 20px; }
+    .next-appt-card .label-row .appt-id { font-weight: 400; color: #737373; line-height: normal; }
+    .next-appt-card .details { display: flex; flex-direction: column; gap: 12px; }
+    .next-appt-card .property-name { font-size: 24px; font-weight: 500; color: #171717; white-space: nowrap; }
+    .next-appt-card .detail-row { display: flex; align-items: center; gap: 4px; }
+    .next-appt-card .detail-row img { width: 16px; height: 16px; flex-shrink: 0; }
+    .next-appt-card .detail-row span { font-size: 14px; color: #737373; white-space: nowrap; font-weight: 400; }
+    .next-appt-card .badge-time { font-size: 14px; font-weight: 600; color: #2783da; text-align: right; letter-spacing: -0.1504px; width: 65px; line-height: 20px; flex-shrink: 0; }
+
+    /* ETA accordion row */
+    .eta-row {
+      display: flex;
+      align-items: center;
+      padding: 12px;
+      border-top: 1px solid #ddd;
+      background: #fff;
+      width: 330px;
+      cursor: pointer;
+    }
+    .eta-row .inner { position: relative; width: 306px; height: 24px; }
+    .eta-row .timer-icon { position: absolute; left: 0; top: 0; width: 24px; height: 24px; }
+    .eta-row .eta-text { position: absolute; left: 32px; top: 2.5px; font-size: 16px; font-weight: 600; color: #171717; }
+    .eta-row .chevron { position: absolute; left: 280px; top: 3px; width: 18px; height: 18px; }
+
+    /* Navigate button */
+    .btn-nav {
+      background: #06437d;
+      border: none;
+      border-radius: 4px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+      cursor: pointer;
+      color: #fefeff;
+      font-size: 16px;
+      font-weight: 500;
+      font-family: 'Roboto', sans-serif;
+    }
+    .btn-nav img { width: 16px; height: 16px; }
+
+    /* ── Appointment list cards ── */
+    .appt-list { display: flex; flex-direction: column; gap: 16px; }
+
+    .repair-card {
+      background: #fff;
+      border: 1px solid #dddcdb;
+      border-radius: 8px;
+      height: 140px;
+      width: 370px;
+      position: relative;
+      flex-shrink: 0;
+    }
+    .repair-card.active {
+      background: #f5faff;
+      border: 2px solid #2783da;
+      filter: drop-shadow(0px 2px 5px rgba(38,38,38,0.05));
+    }
+    .repair-card .time-col {
+      position: absolute;
+      left: 38.5px;
+      top: 18px;
+      transform: translateX(-50%);
+      font-family: 'Inter', sans-serif;
+      font-size: 16px;
+      font-weight: 600;
+      color: #525252;
+      white-space: nowrap;
+      text-align: center;
+      letter-spacing: -0.1504px;
+      line-height: 20px;
+    }
+    .repair-card .icon-col {
+      position: absolute;
+      left: 18px;
+      top: 51px;
+      width: 41.5px;
+      height: 41.5px;
+      border-radius: 50%;
+      background: #edfcf2;
+      display: flex;
+      align-items: flex-start;
+      padding: 7.98px;
+    }
+    .repair-card .icon-col .house-wrap {
+      width: 100%;
+      height: 25.54px;
+      overflow: hidden;
+      position: relative;
+    }
+    .repair-card .icon-col-img {
+      position: absolute;
+      left: 18px;
+      top: 48px;
+      width: 47px;
+      height: 40px;
+      overflow: hidden;
+    }
+    .repair-card .icon-col-img img {
+      position: absolute;
+      width: 118.67%;
+      left: -5.33%;
+      top: -25%;
+    }
+    .repair-card .info-col {
+      position: absolute;
+      left: 84px;
+      top: 16px;
+      width: 260px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .repair-card .info-col .meta-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      height: 24px;
+    }
+    .repair-card .info-col .claim-id { font-size: 14px; color: #737373; white-space: nowrap; }
+    .claim-badge {
+      background: #ebf8fe;
+      border-radius: 2px;
+      padding: 4px 8px;
+      font-size: 12px;
+      color: #075a83;
+      white-space: nowrap;
+    }
+    .repair-card .property-title {
+      font-family: 'Inter', sans-serif;
+      font-size: 16px;
+      font-weight: 500;
+      color: #000;
+      white-space: nowrap;
+      letter-spacing: -0.3125px;
+      line-height: 24px;
+    }
+    .repair-card .detail-row {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .repair-card .detail-row img { width: 16px; height: 16px; flex-shrink: 0; }
+    .repair-card .detail-row span { font-size: 14px; color: #737373; white-space: nowrap; }
+    .repair-card .distance {
+      font-size: 12px;
+      color: #737373;
+      line-height: 18px;
+    }
+
+    /* ── Claims card ── */
+    .claims-container {
+      background: #fff;
+      border: 1px solid #dadada;
+      border-radius: 8px;
+      padding: 16px 16px 24px;
+      width: 322px;
+      margin-left: 48px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+      filter: drop-shadow(0px 2px 5px rgba(38,38,38,0.05));
+    }
+    .claims-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .claims-header .label { font-size: 14px; color: #525252; line-height: 21px; }
+    .claims-header .count-badge {
+      background: #000;
+      border-radius: 999px;
+      width: 30px;
+      height: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .claims-header .count-badge span {
+      font-family: 'Inter', sans-serif;
+      font-size: 12px;
+      font-weight: 600;
+      color: #fff;
+    }
+
+    /* Individual claim row */
+    .claim-item {
+      background: #fff;
+      border-radius: 8px;
+      padding: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .claim-item .top {
+      position: relative;
+      height: 98px;
+      width: 274px;
+    }
+    .claim-item .claim-number {
+      position: absolute;
+      left: 44px;
+      top: 4px;
+      font-size: 16px;
+      font-weight: 500;
+      color: #171717;
+      white-space: nowrap;
+    }
+    .priority-badge {
+      position: absolute;
+      right: 0;
+      top: 0;
+      padding: 4px 8px;
+      border-radius: 2px;
+      font-size: 12px;
+      white-space: nowrap;
+    }
+    .priority-high { background: #fef1f1; color: #991b1b; }
+    .status-open   { background: #edfcf2; color: #166534; }
+    .status-closed { background: #e5e5e5; color: #737474; }
+
+    .claim-icon-bg {
+      position: absolute;
+      left: 0;
+      top: 6.5px;
+      width: 35px;
+      height: 35px;
+      background: #f6f7f9;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .claim-icon-bg img { width: 29px; height: 17.7px; object-fit: contain; }
+
+    .claim-meta {
+      position: absolute;
+      left: 44px;
+      top: 33px;
+      display: flex;
+      flex-direction: column;
+      gap: 8.5px;
+    }
+    .claim-status-row { display: flex; align-items: center; gap: 8.5px; }
+    .claim-type-badge {
+      padding: 2.8px 5.7px;
+      border-radius: 1.4px;
+      font-size: 10px;
+      white-space: nowrap;
+    }
+    .badge-new      { background: #f3e8ff; color: #6e11b0; }
+    .badge-progress { background: #fff3ea; color: #824417; }
+    .badge-pending  { background: #fef9c2; color: #894b00; }
+    .claim-type-label { font-size: 10px; color: #737373; white-space: nowrap; }
+
+    .claim-detail-row { display: flex; align-items: center; gap: 2.8px; }
+    .claim-detail-row img { width: 11.3px; height: 11.3px; flex-shrink: 0; }
+    .claim-detail-row span { font-size: 10px; color: #737373; white-space: nowrap; }
+
+    /* Action buttons */
+    .btn-outline {
+      border: 1px solid #666;
+      border-radius: 4px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      background: #fff;
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: 500;
+      color: #333;
+      font-family: 'Roboto', sans-serif;
+      width: 274px;
+    }
+    .btn-outline img { width: 17px; height: 17px; flex-shrink: 0; }
+
+    .show-all {
+      font-size: 14px;
+      font-weight: 500;
+      color: #06437d;
+      text-align: center;
+      line-height: 18px;
+      cursor: pointer;
+      width: 290px;
+    }
+
+    /* ── Damage recording card ── */
+    .damage-card {
+      background: #fff;
+      border: 1px solid #dadada;
+      border-radius: 8px;
+      padding: 16px;
+      width: 322px;
+      margin-left: 48px;
+      filter: drop-shadow(0px 2px 5px rgba(38,38,38,0.05));
+    }
+
+    .spacer { height: 16px; }
+    .spacer-sm { height: 8px; }
+  </style>
+</head>
+<body>
+<div class="phone">
+
+  <!-- ════════════════════════════════════════
+       TURN 1 – AI greeting
+  ═════════════════════════════════════════ -->
+  <div class="convo-row">
+    <div class="ai-avatar">
+      <div class="bubble"></div>
+      <img src="assets/logo.svg" alt="AI" />
+    </div>
+    <div class="ai-text-bubble">
+      Below lists all the scheduled appointments you have for today.
+    </div>
+  </div>
+
+  <div class="spacer"></div>
+
+  <!-- Appointments overview -->
+  <div class="appt-overview">
+    <div class="header">
+      <span class="title">4 appointments today</span>
+      <span class="next">Next in 58m</span>
+    </div>
+    <div class="timeline">
+      <div class="timeline-slot">
+        <div class="bar bar-green"></div>
+        <div class="time-label">09:00</div>
+      </div>
+      <div class="timeline-slot">
+        <div class="bar bar-green"></div>
+        <div class="time-label">11:30</div>
+      </div>
+      <div class="timeline-slot">
+        <div class="bar bar-blue"></div>
+        <div class="time-label">14:00</div>
+      </div>
+      <div class="timeline-slot">
+        <div class="bar bar-gray"></div>
+        <div class="time-label">16:30</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="spacer"></div>
+
+  <!-- Next appointment card -->
+  <div class="next-appt-card">
+    <div class="top-row">
+      <div class="info">
+        <div class="label-row">
+          <span class="appt-label">NEXT APPT.</span>
+          <span class="appt-id">OH-GKS-212033</span>
+        </div>
+        <div class="details">
+          <span class="property-name">The Village of Redmond</span>
+          <div class="detail-row">
+            <img src="assets/clipboard-check.svg" alt="" />
+            <span>Property Inspections</span>
+          </div>
+          <div class="detail-row">
+            <img src="assets/icon-inspection.svg" alt="" />
+            <span>8545 166th Ave NE, Redmond WA 98221</span>
+          </div>
+          <div class="detail-row">
+            <img src="assets/icon-clock.svg" alt="" />
+            <span>2:30 PM - 3:30 PM</span>
+          </div>
+        </div>
+      </div>
+      <span class="badge-time">in 58m</span>
+    </div>
+
+    <div class="eta-row">
+      <div class="inner">
+        <img class="timer-icon" src="assets/timer.svg" alt="" />
+        <span class="eta-text">Estimated Arrival</span>
+        <img class="chevron" src="assets/icon-chevron.svg" alt="" />
+      </div>
+    </div>
+
+    <button class="btn-nav">
+      <img src="assets/icon-nav.svg" alt="" />
+      Navigate
+    </button>
+  </div>
+
+  <div class="spacer"></div>
+
+  <!-- Appointment list -->
+  <div class="appt-list">
+    <!-- 09:00 – Kensington -->
+    <div class="repair-card">
+      <span class="time-col">09:00</span>
+      <div class="icon-col">
+        <div class="house-wrap">
+          <img src="assets/vector1.svg" alt="" style="position:absolute;inset:-5%;width:110%;height:110%;" />
+          <img src="assets/vector2.svg" alt="" style="position:absolute;left:0;bottom:0;width:62.5%;height:41.65%;" />
+        </div>
+      </div>
+      <div class="info-col">
+        <div class="meta-row">
+          <span class="claim-id">OH-GKS-212033</span>
+          <span class="claim-badge">Property Inspections</span>
+        </div>
+        <span class="property-title">The Kensington Residences</span>
+        <div class="detail-row">
+          <img src="assets/icon-pin.svg" alt="" />
+          <span>2341 E 1800 North Rd</span>
+        </div>
+        <span class="distance">3.2 mi away</span>
+      </div>
+    </div>
+
+    <!-- 11:30 – Riverside -->
+    <div class="repair-card">
+      <span class="time-col">11:30</span>
+      <div class="icon-col">
+        <div class="house-wrap">
+          <img src="assets/vector1.svg" alt="" style="position:absolute;inset:-5%;width:110%;height:110%;" />
+          <img src="assets/vector2.svg" alt="" style="position:absolute;left:0;bottom:0;width:62.5%;height:41.65%;" />
+        </div>
+      </div>
+      <div class="info-col">
+        <div class="meta-row">
+          <span class="claim-id">OH-GKS-212033</span>
+          <span class="claim-badge">Property Inspections</span>
+        </div>
+        <span class="property-title">Riverside Homeowners</span>
+        <div class="detail-row">
+          <img src="assets/icon-pin.svg" alt="" />
+          <span>4521 Oak Street</span>
+        </div>
+        <span class="distance">4.0 mi away</span>
+      </div>
+    </div>
+
+    <!-- 14:00 – Village of Redmond (ACTIVE / next) -->
+    <div class="repair-card active">
+      <span class="time-col" style="left:37px;">14:00</span>
+      <div class="icon-col-img">
+        <img src="assets/inspection.png" alt="" />
+      </div>
+      <div class="info-col" style="left:83px;top:15px;">
+        <div class="meta-row">
+          <span class="claim-id">HO-GKS-212321</span>
+          <span class="claim-badge">Property Inspections</span>
+        </div>
+        <span class="property-title">The Village of Redmond</span>
+        <div class="detail-row">
+          <img src="assets/icon-pin.svg" alt="" />
+          <span>8545 166th Ave NE</span>
+        </div>
+        <span class="distance">1.2 mi away</span>
+      </div>
+    </div>
+
+    <!-- 16:30 – Olentangy -->
+    <div class="repair-card">
+      <span class="time-col">16:30</span>
+      <div class="info-col">
+        <div class="meta-row">
+          <span class="claim-id">OH-GKS-233220</span>
+          <span class="claim-badge">Property Inspections</span>
+        </div>
+        <span class="property-title">Olentangy River Rd</span>
+        <div class="detail-row">
+          <img src="assets/icon-pin.svg" alt="" />
+          <span>Olentangy River Rd</span>
+        </div>
+        <span class="distance">5.8 mi away</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════
+       TURN 2 – User: pull up next appt details
+  ═════════════════════════════════════════ -->
+  <div class="spacer" style="height:32px;"></div>
+  <div class="user-prompt">
+    <div class="bubble-inner">Pull up the details for my next appointment.</div>
+  </div>
+  <div class="spacer"></div>
+
+  <div class="convo-row">
+    <div class="ai-avatar">
+      <div class="bubble"></div>
+      <img src="assets/logo.svg" alt="AI" />
+    </div>
+    <div class="ai-text-bubble">
+      Below lists all the scheduled appointments you have for today.
+    </div>
+  </div>
+  <div class="spacer"></div>
+
+  <!-- Repeated next-appt card (AI response) -->
+  <div class="next-appt-card">
+    <div class="top-row">
+      <div class="info">
+        <div class="label-row">
+          <span class="appt-label">NEXT APPT.</span>
+          <span class="appt-id">OH-GKS-212033</span>
+        </div>
+        <div class="details">
+          <span class="property-name">The Village of Redmond</span>
+          <div class="detail-row">
+            <img src="assets/clipboard-check.svg" alt="" />
+            <span>Property Inspections</span>
+          </div>
+          <div class="detail-row">
+            <img src="assets/icon-inspection.svg" alt="" />
+            <span>8545 166th Ave NE, Redmond WA 98221</span>
+          </div>
+          <div class="detail-row">
+            <img src="assets/icon-clock.svg" alt="" />
+            <span>2:30 PM - 3:30 PM</span>
+          </div>
+        </div>
+      </div>
+      <span class="badge-time">in 58m</span>
+    </div>
+    <div class="eta-row">
+      <div class="inner">
+        <img class="timer-icon" src="assets/timer.svg" alt="" />
+        <span class="eta-text">Estimated Arrival</span>
+        <img class="chevron" src="assets/icon-chevron.svg" alt="" />
+      </div>
+    </div>
+    <button class="btn-nav">
+      <img src="assets/icon-nav.svg" alt="" />
+      Navigate
+    </button>
+  </div>
+
+  <!-- ════════════════════════════════════════
+       TURN 3 – User: navigate to next appt
+  ═════════════════════════════════════════ -->
+  <div class="spacer" style="height:32px;"></div>
+  <div class="user-prompt">
+    <div class="bubble-inner">Navigate to the address for next<br>appointment</div>
+  </div>
+  <div class="spacer"></div>
+
+  <div class="convo-row">
+    <div class="ai-avatar">
+      <div class="bubble"></div>
+      <img src="assets/logo.svg" alt="AI" />
+    </div>
+    <div class="ai-text-bubble">
+      Below lists the first the scheduled appointment you have for today.
+    </div>
+  </div>
+  <div class="spacer"></div>
+
+  <div class="next-appt-card">
+    <div class="top-row">
+      <div class="info">
+        <div class="label-row">
+          <span class="appt-label">NEXT APPT.</span>
+          <span class="appt-id">OH-GKS-212033</span>
+        </div>
+        <div class="details">
+          <span class="property-name">The Village of Redmond</span>
+          <div class="detail-row">
+            <img src="assets/clipboard-check.svg" alt="" />
+            <span>Property Inspections</span>
+          </div>
+          <div class="detail-row">
+            <img src="assets/icon-inspection.svg" alt="" />
+            <span>8545 166th Ave NE, Redmond WA 98221</span>
+          </div>
+          <div class="detail-row">
+            <img src="assets/icon-clock.svg" alt="" />
+            <span>2:30 PM - 3:30 PM</span>
+          </div>
+        </div>
+      </div>
+      <span class="badge-time">in 58m</span>
+    </div>
+    <div class="eta-row">
+      <div class="inner">
+        <img class="timer-icon" src="assets/timer.svg" alt="" />
+        <span class="eta-text">Estimated Arrival</span>
+        <img class="chevron" src="assets/icon-chevron.svg" alt="" />
+      </div>
+    </div>
+    <button class="btn-nav">
+      <img src="assets/icon-nav.svg" alt="" />
+      Navigate
+    </button>
+  </div>
+
+  <!-- ════════════════════════════════════════
+       TURN 4 – User: pull up HO claims
+  ═════════════════════════════════════════ -->
+  <div class="spacer" style="height:32px;"></div>
+  <div class="user-prompt">
+    <div class="bubble-inner">Pull up all of my assigned HO claims</div>
+  </div>
+  <div class="spacer"></div>
+
+  <div class="convo-row">
+    <div class="ai-avatar">
+      <div class="bubble"></div>
+      <img src="assets/logo.svg" alt="AI" />
+    </div>
+    <div class="ai-text-bubble">
+      Below is a list of all your Homeowner assigned claims on record.
+    </div>
+  </div>
+  <div class="spacer"></div>
+
+  <!-- Claims list card -->
+  <div class="claims-container">
+    <div class="claims-header">
+      <span class="label">Your claims</span>
+      <div class="count-badge"><span>25</span></div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:16px;">
+
+      <!-- Claim 1 – 3804-942-522 -->
+      <div class="claim-item">
+        <div class="top" style="height:98px;">
+          <span class="claim-number">3804-942-522</span>
+          <div class="claim-icon-bg"><img src="assets/house.svg" alt="" /></div>
+          <span class="priority-badge priority-high">High</span>
+          <span class="priority-badge status-open" style="right:46px;">Open</span>
+          <div class="claim-meta">
+            <div class="claim-status-row">
+              <span class="claim-type-badge badge-new">New</span>
+              <span class="claim-type-label">Water Damage</span>
+            </div>
+            <div class="claim-detail-row">
+              <img src="assets/icon-location.svg" alt="" />
+              <span>8545 166th Ave NE</span>
+            </div>
+            <div class="claim-detail-row">
+              <img src="assets/rotate-cw1.svg" alt="" />
+              <span>Updated 54 min ago</span>
+            </div>
+          </div>
+        </div>
+        <button class="btn-outline">
+          <img src="assets/icon-schedule.svg" alt="" />
+          Schedule Inspection
+        </button>
+      </div>
+
+      <!-- Claim 2 – 3805-942-213 -->
+      <div class="claim-item" style="padding:8px 8px 0;">
+        <div class="top" style="height:87px;">
+          <span class="claim-number">3805-942-213</span>
+          <div class="claim-icon-bg"><img src="assets/house.svg" alt="" /></div>
+          <span class="priority-badge status-closed" style="right:0;top:0;">Closed</span>
+          <div class="claim-meta">
+            <div class="claim-status-row">
+              <span class="claim-type-badge badge-progress" style="font-size:6px;padding:2.8px 5.7px;">In Progress</span>
+              <span class="claim-type-label">Burglary</span>
+            </div>
+            <div class="claim-detail-row">
+              <img src="assets/icon-map.svg" alt="" />
+              <span>2341 E 1800 North Rd</span>
+            </div>
+            <div class="claim-detail-row">
+              <img src="assets/rotate-cw2.svg" alt="" />
+              <span>Updated 3 hrs ago</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Claim 3 – 3806-942-236 -->
+      <div class="claim-item" style="padding:8px 8px 0;">
+        <div class="top" style="height:69px;">
+          <span class="claim-number">3806-942-236</span>
+          <div class="claim-icon-bg"><img src="assets/house.svg" alt="" /></div>
+          <span class="priority-badge status-closed" style="right:0;top:0;">Closed</span>
+          <div class="claim-meta" style="top:30px;">
+            <div class="claim-status-row">
+              <span class="claim-type-badge badge-pending" style="font-size:6px;padding:2.8px 5.7px;">Pending Info</span>
+              <span class="claim-type-label">Glass Breakage</span>
+            </div>
+            <div class="claim-detail-row">
+              <img src="assets/icon-map.svg" alt="" />
+              <span>521 Oak Street</span>
+            </div>
+            <div class="claim-detail-row">
+              <img src="assets/rotate-cw2.svg" alt="" />
+              <span>Updated 6 hrs ago</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <p class="show-all">Show All</p>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════
+       TURN 5 – User: record damages
+  ═════════════════════════════════════════ -->
+  <div class="spacer" style="height:32px;"></div>
+  <div class="user-prompt">
+    <div class="bubble-inner">I would like to record damages and save them under Claim# <strong>3804-942-522</strong>.</div>
+  </div>
+  <div class="spacer"></div>
+
+  <div class="convo-row">
+    <div class="ai-avatar">
+      <div class="bubble"></div>
+      <img src="assets/logo.svg" alt="AI" />
+    </div>
+    <div class="ai-text-bubble" style="height:129px;display:flex;align-items:flex-start;">
+      I found Claim# 3804-942-522. You can now take written notes, record using your camera, or create voice notes whichever you prefer.
+    </div>
+  </div>
+  <div class="spacer"></div>
+
+  <!-- Damage recording card -->
+  <div class="damage-card">
+    <div class="claim-item" style="padding:8px;">
+      <!-- Claim header -->
+      <div class="top" style="height:106px;">
+        <span class="claim-number">3804-942-522</span>
+        <div class="claim-icon-bg"><img src="assets/house.svg" alt="" /></div>
+        <span class="priority-badge priority-high">High</span>
+        <span class="priority-badge status-open" style="right:46px;">Open</span>
+        <div class="claim-meta">
+          <div class="claim-status-row">
+            <span class="claim-type-badge badge-new">New</span>
+            <span class="claim-type-label">Water Damage</span>
+          </div>
+          <div class="claim-detail-row">
+            <img src="assets/icon-map.svg" alt="" />
+            <span>8545 166th Ave NE</span>
+          </div>
+          <div class="claim-detail-row">
+            <img src="assets/rotate-cw2.svg" alt="" />
+            <span>Updated 54 min ago</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Action buttons -->
+      <div style="display:flex;flex-direction:column;gap:12px;margin-top:4px;">
+        <button class="btn-outline">
+          <img src="assets/notebook-pen.svg" alt="" style="width:16px;height:16px;" />
+          Take Notes
+        </button>
+        <button class="btn-outline">
+          <img src="assets/icon-video.svg" alt="" style="width:16px;height:16px;" />
+          New Video
+        </button>
+        <button class="btn-outline">
+          <img src="assets/icon-voice.svg" alt="" style="width:16px;height:16px;" />
+          Voice Note
+        </button>
+      </div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>
